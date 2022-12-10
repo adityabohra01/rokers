@@ -1,0 +1,7 @@
+nav > div {
+    color: var(--ic);
+    box-shadow:
+        0px 4.6px 4.8px -8px rgba(0, 0, 0, 0.016),
+        0px 16.6px 16.1px -8px rgba(0, 0, 0, 0.037),
+        0px 66px 72px -8px rgba(0, 0, 0, 0.07);
+}

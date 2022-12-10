@@ -1,0 +1,74 @@
+.albums {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-around;
+    /* margin: 0 -10px; */
+    width: calc(50% - 20px);
+    min-width: 140px;
+    height: 156px;
+
+    /* margin: 0 auto; */
+    position: relative;
+    flex-direction: column;
+    justify-content: end;
+    align-items: baseline;
+    background-size: cover;
+    border-radius: 16px;
+    padding: 8px;
+}
+
+.albumControlWrapper {
+    display: flex;
+    width: 100%;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    align-content: center;
+    justify-content: space-between;
+    height: 40%;
+    padding: 8px;
+    align-items: center;
+    backdrop-filter: blur(4px);
+    border-radius: 16px;
+    height: 43px;
+    transition: backdrop-filter 0.3s ease-in-out;
+}
+
+.albumControlWrapper:hover {
+    backdrop-filter: blur(6px);
+}
+
+/* .albumControlWrapper div.playArrow {
+    width: 40px;
+} */
+
+.albumControlWrapper div.albumNameAndArtist {
+    display: flex;
+    flex-direction: column;
+    flex-wrap: nowrap;
+    font-size: small;
+    align-items: flex-start;
+    justify-content: center;
+    line-height: 16px;
+}
+
+.albumControlWrapper div.albumNameAndArtist span:first-of-type {
+    font-weight: bold;
+    color: var(--lt);
+}
+
+.albumControlWrapper div.albumNameAndArtist span:last-of-type {
+    font-size: 10px;
+    color: var(--st);
+}
+
+.albumReflection {
+    position: absolute;
+    width: calc(100% - 0px);
+    min-width: 140px;
+    height: 156px;
+    border-radius: 16px;
+    object-fit: cover;
+    z-index: -1;
+    transform: translate(-8px, 10px) scaleX(0.9);
+    filter: blur(8px) saturate(1.3) brightness(1.6) contrast(1.05);
+}
