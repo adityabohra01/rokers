@@ -1,0 +1,91 @@
+
+.root div.nowPlaying div.searchResult div.info div.title{
+    width: 100%;
+}
+.root div.nowPlaying div.searchResult div.info div.aa div.artist {
+    margin-right: 16px; 
+}
+
+.root div.nowPlaying div.searchResult div.info div.aa {
+    width: 100%;
+    font-size: 0.8rem;
+    color: var(--ic);
+    display: flex;
+}
+
+.root div.nowPlaying div.searchResult div.info {
+    line-height: 32px;
+    display: flex;
+    flex-direction: column;
+    flex-wrap: nowrap;
+    justify-content: space-between;
+    align-items: flex-start;
+    font-size: larger;
+    width: 100%;
+    height: 100%;
+    padding: 0 8px;
+}
+
+.root div.nowPlaying div.searchResult {
+    width: 100%;
+    height: 80px;
+    position: relative;
+    border-radius: 16px;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    justify-content: space-between;
+    padding: 8px;
+    align-items: center;
+}
+
+.root div.nowPlaying div.searchResult div.coverPhoto img.actual {
+    height: 100%;
+    border-radius: 16px;
+    width: 64px;
+}
+.root div.nowPlaying div.searchResult div img.reflection {
+    position: absolute;
+    left: 0;
+    top: 0;
+    border-radius: 16px;
+    object-fit: cover;
+    z-index: -1;
+    transform: scale(1.1) translate(8px, 4px);
+    filter: blur(12px) saturate(1.3) brightness(2) contrast(1.05);
+    height: calc(100% - 16px);
+}
+
+.RadialProgress {
+    --hue: 220;
+    --holesize: 65%;
+    --track-bg: hsl(233, 34%, 92%);
+    --progress: 35%;
+    
+    display: grid;
+    align-items: center;
+    justify-items: center;
+    place-items: center;
+    position: relative;
+    font-weight: 700;
+    height: 48px;
+    width: 48px;
+    font-size: max(10vmin, 1.4rem)
+}
+
+.RadialProgress::before {
+    --progress: 35%;
+    --hue: 220;
+    --holesize: 65%;
+    --track-bg: hsl(233, 34%, 92%);
+    content: '';
+    position: absolute;
+    border-radius: 50%;
+    z-index: -1;
+    background: conic-gradient( hsl(var(--hue) 100% 70%), hsl(var(--hue) 100% 40%), hsl(var(--hue) 100% 70%) var(--progress, 0%), var(--track-bg) var(--progress, 0%) 100% );
+    -webkit-mask-image: radial-gradient( transparent var(--holesize), black calc(var(--holesize) + 0.5px) );
+    mask-image: radial-gradient( transparent var(--holesize), black calc(var(--holesize) + 0.5px) );
+    transform: scale(1.05);
+    height: 48px;
+    width: 48px;
+  }

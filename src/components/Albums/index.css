@@ -1,3 +1,27 @@
+.expand {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: var(--bg);
+    z-index: 10000;
+    box-sizing: border-box;
+    /* margin:  0 -16px; */
+    min-width: 346px;
+    max-width: 440px;
+}
+
+.albumContainer {
+    display: flex;
+    position: relative;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    margin: 16px 0 0 0;
+}
+
 .albums {
     display: flex;
     flex-wrap: wrap;
@@ -14,7 +38,7 @@
     align-items: baseline;
     background-size: cover;
     border-radius: 16px;
-    padding: 8px;
+    margin: 8px;
 }
 
 .albumControlWrapper {
@@ -27,14 +51,16 @@
     height: 40%;
     padding: 8px;
     align-items: center;
-    backdrop-filter: blur(4px);
-    border-radius: 16px;
+    backdrop-filter: blur(4px) brightness(0.8);
+    /* border-radius: 16px; */
     height: 43px;
-    transition: backdrop-filter 0.3s ease-in-out;
+    margin: 8px 0;
+    transition: all 0.3s ease-in-out;
+
 }
 
 .albumControlWrapper:hover {
-    backdrop-filter: blur(6px);
+    backdrop-filter: blur(6px) brightness(0.75);
 }
 
 /* .albumControlWrapper div.playArrow {
@@ -43,22 +69,22 @@
 
 .albumControlWrapper div.albumNameAndArtist {
     display: flex;
+    width: calc(100% - 40px);
     flex-direction: column;
     flex-wrap: nowrap;
     font-size: small;
     align-items: flex-start;
     justify-content: center;
-    line-height: 16px;
-}
-
-.albumControlWrapper div.albumNameAndArtist span:first-of-type {
-    font-weight: bold;
     color: var(--lt);
-}
+    line-height: 16px;
+    font-weight: bold;
 
-.albumControlWrapper div.albumNameAndArtist span:last-of-type {
-    font-size: 10px;
-    color: var(--st);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 2; /* number of lines to show */
+    line-clamp: 2; 
+    -webkit-box-orient: vertical;
 }
 
 .albumReflection {
@@ -69,6 +95,6 @@
     border-radius: 16px;
     object-fit: cover;
     z-index: -1;
-    transform: translate(-8px, 10px) scaleX(0.9);
-    filter: blur(8px) saturate(1.3) brightness(1.6) contrast(1.05);
+    transform: translate(0px, 2px) scaleX(0.9);
+    filter: blur(8px) saturate(1.3) brightness(2) contrast(1.05);
 }
