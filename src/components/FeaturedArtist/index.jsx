@@ -10,6 +10,7 @@ export default function FeaturedArtist() {
         featured: true,
         artistImage: weekend,
     })
+    const [songs, setSongs] = React.useState([])
 
     useEffect(() => {
         // fetch artist
@@ -20,10 +21,28 @@ export default function FeaturedArtist() {
             console.log(artist)
         })
     }, [])
+
+    function getSongs() {
+        // fetch songs
+        bring({ path: "featuredArtistSongs/" + artist.artistID })
+            .then(data => data.json())
+            .then(songs => {
+                setSongs(songs)
+                console.log(songs)
+            })
+            .catch(err => console.error(err))
+    }
     return (
         <>
             {!open ? (
-                <article className="featuredArtist" style={{ backgroundImage: `url(${artist.artistImage})` }} onClick={() => setOpen(!open)}>
+                <article
+                    className="featuredArtist"
+                    style={{ backgroundImage: `url(${artist.artistImage})` }}
+                    onClick={() => {
+                        getSongs()
+                        setOpen(!open)
+                    }}
+                >
                     <div
                         style={{
                             display: "flex",
@@ -88,6 +107,15 @@ export default function FeaturedArtist() {
                                     borderRadius: 16,
                                     marginRight: 8,
                                 }}
+                                onClick={(e) => {
+                                    e.stopPropagation()
+                                    bring({
+                                        path: "playArtist/" + artist.artistID,
+                                        options: {
+                                            method: "GET",
+                                        }
+                                    })
+                                }}
                             >
                                 <span className="material-icons-outlined" style={{ fontSize: 32 }}>
                                     play_arrow
@@ -118,7 +146,7 @@ export default function FeaturedArtist() {
                     <div
                         style={{
                             display: "flex",
-                            flexDirection: "row",
+                            flexDirection: "column",
                             justifyContent: "space-between",
                             alignItems: "center",
                             padding: 12,
@@ -141,6 +169,53 @@ export default function FeaturedArtist() {
                             <span className="material-icons" onClick={() => setOpen(false)}>
                                 close
                             </span>
+                        </div>
+                        <br></br>
+
+                        <div
+                            style={{
+                                display: "flex",
+                                flexDirection: "row",
+                                justifyContent: "space-around",
+                                alignItems: "center",
+                                width: "100%",
+                                flexWrap: "wrap",
+                                overflowY: "scroll",
+                                whiteSpace: "pre-line",
+                                height: "calc(100% - 64px)",
+                            }}
+                        >
+                            {songs.map((album, index) =>
+                                !open && index > 1 ? null : (
+                                    <article key={album.sid} className="albums" style={{ backgroundImage: `url(${album.albumArt})` }}>
+                                        <div className="albumControlWrapper">
+                                            <div className="albumNameAndArtist">
+                                                <span>{album.name}</span>
+                                                {/* <span>{album.artist}</span> */}
+                                            </div>
+                                            <div className="playArrow" onClick={() => {
+                                                bring({
+                                                    path: "play",
+                                                    options: {
+                                                        method: "POST",
+                                                        headers: {
+                                                            "Content-Type": "application/json",
+                                                        },
+                                                        body: JSON.stringify({
+                                                            track: {
+                                                                id: album.sid,
+                                                            }
+                                                        }),
+                                                    }
+                                                })
+                                            }}>
+                                                <span className="material-icons-outlined">play_arrow</span>
+                                            </div>
+                                        </div>
+                                        <img className="albumReflection" src={album.albumArt} />
+                                    </article>
+                                )
+                            )}
                         </div>
                     </div>
                 </div>

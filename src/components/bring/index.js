@@ -27,7 +27,7 @@ export default function bring({
     }
     // console.log(options)
     
-    path = path.includes("://") ? path : window.location.href + (path.startsWith("/") ? path.slice(1, path.length - 1) : path)
+    path = path.includes("://") ? path : "http://" + window.location.hostname + ":3000/" + (path.startsWith("/") ? path.slice(1, path.length - 1) : path)
     console.log("bring", path, options)
     return fetch(path, options)
 }

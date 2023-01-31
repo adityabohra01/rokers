@@ -1,7 +1,9 @@
 import React, { useState, useRef, useCallback } from "react";
 import { debounce } from "debounce"
 import bring from "../bring"
-import './index.css';
+import './index.css'
+import { useEffect } from "react";
+import Speech from "../Speech";
 
 export default function Navigation() {
     const [search, setSearch] = useState(false);
@@ -9,6 +11,7 @@ export default function Navigation() {
     const [searchData, setSearchData] = useState({})
     const [inTransit, setInTransit] = useState(false)
     const [controller, setController] = useState(new AbortController())
+    const appTitle = useRef(null)
     // debounced search
     const debouncedSearch = useCallback(
         debounce(() => {
@@ -39,7 +42,6 @@ export default function Navigation() {
     }
 
     function playSong (track) {
-        console.log(track)
         bring({
             path: "play",
             options: {
@@ -53,6 +55,7 @@ export default function Navigation() {
             .then(data => data.json())
             .then(data => {
                 console.log(data)
+                setSearch(false)
             })
     }
 
@@ -76,7 +79,7 @@ export default function Navigation() {
                     position: "fixed",
                     // top: 0,
                     // left: 0,
-                    margin: "0 -8px",
+                    // margin: "0 -8px",
                     width: "calc(100% - 32px)",
                     display: "flex",
                     height: "48px",
@@ -88,27 +91,21 @@ export default function Navigation() {
                     zIndex: 100,
                 }}
             >
+                <Speech />
                 <div
-                    className="playArrow"
-                    style={{
-                        height: "48px",
-                        width: "48px",
-                        display: "flex",
-                        justifyContent: "center",
-                        alignItems: "center",
-                        backgroundColor: "var(--container)",
-                        borderRadius: 16,
-                    }}
-                >
-                    <span className="material-icons-outlined" style={{ fontSize: 32 }}>
-                        grid_view
-                    </span>
-                </div>
-                <div
+                    className="appTitle"
+                    ref={appTitle}
                     style={{
                         fontsize: "large",
                         fontWeight: "bold",
                         alignContent: "center",
+                        fontSize: 24,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        fontVariant: "small-caps",
+                        tectSpacing: "0.5em",
+
                     }}
                 >
                     Rokers
@@ -185,7 +182,9 @@ export default function Navigation() {
                                                 <div className="album"> {item.album.name.substring(0, 15)}</div>
                                             </div>
                                         </div>
-                                        <div className="playArrow playButton" onClick={() => playSong(item)}>
+                                        <div className="playArrow playButton" onClick={() => {
+                                            playSong(item)
+                                        }}>
                                             <span className="material-icons-outlined" style={{ fontSize: 32 }}>
                                                 play_arrow
                                             </span>

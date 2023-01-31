@@ -17,7 +17,7 @@ export default async (req, res) => {
             res.json(result[0])
         } else {
             // if song doesn't exist, return error
-            res.json({error: "No songs found"})
+            res.json({error: "No Artists found"})
         }
         console.log(result)
     } catch (error) {

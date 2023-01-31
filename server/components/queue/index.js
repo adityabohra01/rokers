@@ -1,109 +1,198 @@
-import { exec } from "child_process"
+import Player from "vlc-remote"
+import { initializeApp } from "firebase/app"
+import { ref, getDatabase, update, set } from "firebase/database"
+import spotify from "../../spotify/index.js"
+import { query, insert } from "../../database/index.js"
+
+const firebaseConfig = {
+    apiKey: "AIzaSyA1_F1pROIduw6oLTxIUpyypPS3iciASk4",
+    authDomain: "rokers-88dad.firebaseapp.com",
+    projectId: "rokers-88dad",
+    storageBucket: "rokers-88dad.appspot.com",
+    messagingSenderId: "472240287143",
+    appId: "1:472240287143:web:edf03ee0c37093d27a5a82",
+    databaseURL: "https://rokers-88dad-default-rtdb.asia-southeast1.firebasedatabase.app",
+}
+const app = initializeApp(firebaseConfig)
+const db = getDatabase(app)
 
 class PlaybackQueue {
     constructor() {
-        this.queue = []
-        this.currentSongIndex = null
-
+        this.vlc = new Player({ port: 8088, host: "127.0.0.1" })
+        this.queue = new Array()
+        this.nextPressed = false
+        this.prevPressed = false
+        this.songIndex = -1
+        this.db = db
         this.playing = false
-        this.paused = false
-        this.repeat = false
-        this.shuffle = false
-        this.songInMemory = false
-        this.child = null
-        this.timeLeft = 0
-        this.timer = null
+        this.ref = ref(this.db, "player")
+        this.vlc.start().then(() => {
+            console.log("VLC Started")
+            update(this.ref, {
+                online: true,
+                playing: false,
+            })
+
+            this.vlc.on("error", error => {
+                update(this.ref, {
+                    online: false,
+                    playing: false,
+                })
+                console.log(error)
+            })
+
+            this.vlc.on("state", state => {
+                console.log("state------------------", state)
+            })
+
+            this.vlc.on("play", path => {
+                // add to realtime database using firebase-admin
+                if (!this.nextPressed) {
+                    if (!this.prevPressed) this.songIndex++
+                    this.prevPressed = false
+
+                    if (this.songIndex >= this.queue.length) {
+                        this.songIndex = 0
+                    }
+                }
+                set(this.ref, {
+                    playing: true,
+                    online: true,
+                    added: Date.now(),
+                    song: this.queue[this.songIndex],
+                })
+                this.playing = true
+                console.log("Playing--------------------")
+                this.nextPressed = false
+            })
+        })
     }
 
-    addSong(song) {
-        this.queue.push(song)
-        if (!this.playing && !this.paused) {
-            this.resumePlayback(0)
+    async addToQueue(url, track) {
+        if (!Object.hasOwnProperty.call(track, "duration_ms")) {
+            track = (await spotify.spotifyApi.getTrack(track.id)).body
         }
+        track.download = url
+        this.queue.push(track)
+        console.log("added to queue", this.queue.length)
+        await this.vlc.enqueue(url)
+        await this.vlc.toggle_play()
     }
 
-    removeSong(index) {
-        this.queue.splice(index, 1)
-        if (index === this.currentSongIndex) {
-            if (this.queue.length === 0) {
-                this.stopPlayback()
-            } else {
-                this.resumePlayback(0)
-            }
-        }
+    pause() {
+        this.playing = !this.playing
+        update(this.ref, {
+            playing: this.playing,
+            online: true,
+        })
+        this.vlc.pause()
     }
 
-    resumePlayback(index) {
-        if (index >= this.queue.length) throw new Error("Index out of bounds")
-        
-        this.playing = true
-        this.paused = false
-        this.currentSongIndex = index
-
-        if (this.songInMemory && this.paused) {
-            this.continuePlayback()
-        } else if (this.songInMemory && !this.paused) {
-            // do nothing
-            return
-        } else {
-            this.playSong(this.queue[index])
+    next() {
+        this.nextPressed = true
+        this.songIndex++
+        if (this.songIndex >= this.queue.length) {
+            this.songIndex = 0
         }
+        this.vlc.next()
     }
-    
-    // play song with ffplay using exec
-    async playSong (url) {
-        if (this.child) {
-            this.child.kill()
-            this.child = null
+
+    prev() {
+        this.prevPressed = true
+        this.songIndex--
+        if (this.songIndex < 0) {
+            this.songIndex = this.queue.length - 1
         }
-        this.songInMemory = true
-        this.child = exec(`omxplayer "${url}" -o alsa:hw:1`)
-        this.child.on('exit', () => {
-            this.songInMemory = false
-            this.child = null
-            if (this.repeat) {
-                this.resumePlayback(this.currentSongIndex)
-            } else if (this.currentSongIndex + 1 < this.queue.length) {
-                this.resumePlayback(this.currentSongIndex + 1)
-            } else {
-                this.stopPlayback()
+        this.vlc.prev()
+    }
+
+    /**
+     *
+     * @param {{iString}} track track Object containing id of sspotify track
+     *
+     * @returns { Promise }
+     */
+    play(track) {
+        return new Promise(async (resolve, reject) => {
+            try {
+                // query from songs table to see if song exists
+                // if it does, update playCount
+                // if it doesn't, insert into songs table
+                let id
+                const song = await query(`SELECT * FROM songs WHERE sid = '${track.id}'`)
+                console.log(song)
+                if (song.length > 0) {
+                    // update playCount in songs table, update lastPlayed
+                    await query(`UPDATE songs SET playCount = playCount + 1 WHERE sid = '${track.id}'`)
+                } else {
+                    id = await spotify.getSongYoutube(track)
+                    console.log(id)
+                    await insert("songs", {
+                        sid: track.id,
+                        vid: id,
+                        name: track.name,
+                        albumID: track.album.id,
+                        lastPlayed: new Date(),
+                        albumArt: track.album.images[0].url,
+                        length: track.duration_ms,
+                        playCount: 1,
+                        // pid : 1,
+                        favourite: false,
+                    })
+                    // Populate artists table
+                    track.artists.forEach(async artist => {
+                        // query from artists table to see if artist exists
+                        // if it does, update songCount
+                        // if it doesn't, insert into artists table
+                        const artistQuery = await query(`SELECT * FROM artists WHERE artistID = '${artist.id}'`)
+                        if (artistQuery.length > 0) {
+                            await query(`UPDATE artists SET songCount = songCount + 1 WHERE artistID = '${artist.id}'`)
+                        } else {
+                            await insert("artists", {
+                                artistID: artist.id,
+                                artistName: artist.name,
+                                songCount: 1,
+                                favourite: false,
+                            })
+                        }
+                        await insert("songArtists", {
+                            sid: track.id,
+                            artistID: artist.id,
+                        })
+                    })
+                    // Populate albums table
+                    // query from albums table to see if album exists
+                    // if it does, update songCount
+                    // if it doesn't, insert into albums table
+                    const album = await query(`SELECT * FROM albums WHERE albumID = '${track.album.id}'`)
+                    if (album.length > 0) {
+                        await query(`UPDATE albums SET songCount = songCount + 1 WHERE albumID = '${track.album.id}'`)
+                    } else {
+                        await insert("albums", {
+                            albumID: track.album.id,
+                            albumName: track.album.name,
+                            albumImage: track.album.images[0].url,
+                            songCount: 1,
+                            favourite: false,
+                        })
+                    }
+                }
+                const buffer = await spotify.getSongYoutubeBuffer(song.length > 0 ? song[0].vid : id)
+                console.log(buffer)
+
+                await this.addToQueue(buffer, track)
+                resolve(id)
+            } catch (error) {
+                reject(error)
             }
         })
-
     }
 
-    continuePlayback() {
-        if (this.child) {
-            this.child.send('SIGCONT')
-            this.playing = true
-            this.paused = false
-        }
-        else console.log("No child process")
+    clearQueue() {
+        this.vlc.clear_playlist()
+        this.queue = []
+        this.songIndex = -1
     }
-
-    pausePlayback() {
-        if (this.child) {
-            this.child.send('SIGSTOP')
-            this.playing = false
-            this.paused = true
-        }
-        else console.log("No child process")
-    }
-
-    stopPlayback() {
-        if (this.child) {
-            this.queue = []
-            this.child.kill()
-            this.child = null
-            this.playing = false
-            this.paused = false
-            this.currentSongIndex = null
-        }
-        else console.log("No child process")
-    }
-
-
-    
 }
 
 export default new PlaybackQueue()
